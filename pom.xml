@@ -13,6 +13,13 @@
             <artifactId>antlr</artifactId>
             <version>2.7.7</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.atlassian.commonmark</groupId>
+            <artifactId>commonmark</artifactId>
+            <version>0.12.1</version>
+        </dependency>
+
     </dependencies>
 
     <properties>

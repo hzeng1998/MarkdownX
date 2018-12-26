@@ -12,7 +12,7 @@ public class FindComponent {
      * @param name 设置的组件名称
      * @return 查找对象
      */
-    private static Component searchComponentByName(Container c, String name) {//父级组件,设置的组件名称
+    public static Component searchComponentByName(Container c, String name) {//父级组件,设置的组件名称
 
         Component result = null;
         Component[] components = c.getComponents();

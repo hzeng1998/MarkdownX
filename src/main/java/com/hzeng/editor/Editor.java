@@ -3,20 +3,27 @@ package com.hzeng.editor;
 import com.hzeng.util.Constrains;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.plaf.FontUIResource;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
+import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.util.Enumeration;
 
 public class Editor {
 
-    private JTextArea preArea;
-    private JTextArea textArea;
+    private JEditorPane textArea;
+    private JEditorPane preArea;
 
     private Editor() {
 
         JFrame frame = new JFrame("MarkdownX");
+        frame.setName("MarkdownX");
 
-        Directory directory = new Directory();
+        Directory directory = new Directory(frame);
+        directory.setName("directory");
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().setLayout(new GridBagLayout());
@@ -24,8 +31,8 @@ public class Editor {
         frame.setMinimumSize(new Dimension(1280, 1024));
         frame.setIconImage(new ImageIcon("src/main/resources/icons/title/social-markdown.png").getImage());
 
-        JMenuBar menuBar = MarkdownMenuBar.getMarkdownMenuBar();
-
+        JMenuBar menuBar = new MarkdownMenuBar(frame);
+        menuBar.setName("menuBar");
         frame.setJMenuBar(menuBar);
 
         frame.getContentPane().add(directory, new Constrains(0, 0, 1, 1)
@@ -33,11 +40,48 @@ public class Editor {
                 .setFill(Constrains.BOTH));
 
         JScrollPane text_pane = new JScrollPane();
+        text_pane.setName("text_pane");
+
         JScrollPane preview_pane = new JScrollPane();
-        textArea = new JTextArea();
-        preArea = new JTextArea();
+        preview_pane.setName("preview_pane");
+
+        textArea = new MarkdownTextArea();
+        textArea.setName("textArea");
+
+        preArea = new MarkdownTextArea();
+        preArea.setName("preArea");
 
         preArea.setDocument(textArea.getDocument());
+
+        ((PlainDocument)textArea.getDocument()).setDocumentFilter(new DocumentFilter() {
+            @Override
+            public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+                ((MarkdownTextArea) textArea).setSaved();
+                System.out.println(fb.getDocument().getText(offset, length));
+                super.remove(fb, offset, length);
+            }
+        });
+
+        textArea.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                try {
+                    ((MarkdownTextArea) textArea).setSaved();
+                    System.out.println(e.getDocument().getText(e.getOffset(), e.getLength()));
+                } catch (BadLocationException e1) {
+                    e1.printStackTrace();
+                }
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                ((MarkdownTextArea) textArea).setSaved();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+            }
+        });
 
         textArea.setMargin(new Insets(5, 5, 5, 5));
 
@@ -47,11 +91,11 @@ public class Editor {
         preArea.setEditable(false);
         preview_pane.getViewport().add(preArea);
 
-        frame.getContentPane().add(text_pane, new Constrains(1, 0, 3, 1)
+        frame.getContentPane().add(text_pane, new Constrains(1, 0, 1, 1)
                 .setFill(Constrains.BOTH)
                 .setWeight(4, 1));
 
-        frame.getContentPane().add(preview_pane, new Constrains(4, 0, 7, 1)
+        frame.getContentPane().add(preview_pane, new Constrains(2, 0, 1, 1)
                 .setFill(Constrains.BOTH)
                 .setWeight(4, 1));
 

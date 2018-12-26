@@ -1,12 +1,16 @@
 package com.hzeng.editor;
 
+import com.hzeng.util.FindComponent;
+
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 
@@ -20,7 +24,7 @@ class Directory extends JScrollPane {
     private JTree file_tree;
     private DefaultTreeModel file_model;
 
-    Directory() {
+    Directory(Container root) {
 
         DefaultMutableTreeNode top = new DefaultMutableTreeNode(new IconData(ICON_HOME, null, System.getProperty("user.name")));
         DefaultMutableTreeNode node;
@@ -73,7 +77,52 @@ class Directory extends JScrollPane {
                 if (e.getSource() == file_tree && e.getClickCount() == 2) {
                     TreePath select_path = file_tree.getPathForLocation(e.getX(), e.getY());
                     if (select_path != null) {
-                        System.out.println(select_path);
+
+                        String[] file_path = select_path.toString().split(",");
+                        StringBuilder stringBuilder = new StringBuilder();
+                        for (int i = 1; i < file_path.length; i++) {
+                            if (i == file_path.length - 1) {
+                                file_path[i] = file_path[i].substring(0, file_path[i].length() - 1);
+                            }
+                            stringBuilder.append(file_path[i].trim());
+                            if (i != 1) {
+                                stringBuilder.append('\\');
+                            }
+                        }
+                        File file = new File(stringBuilder.toString());
+                        System.out.println(file.getPath());
+                        if (file.isFile()) {
+                            MarkdownTextArea textArea;
+                            int confirm = 0;
+                            if (!(textArea = (MarkdownTextArea) FindComponent.searchComponentByName(root, "textArea")).isSaved()) {
+                                if ((confirm = JOptionPane.showConfirmDialog(null, "Save current file?", "Save", JOptionPane.YES_NO_CANCEL_OPTION)) == 0) {
+
+                                    if (null == textArea.getCurrentFile()) {
+                                        JFileChooser jFileChooser = new JFileChooser();
+                                        jFileChooser.setFileFilter(new FileNameExtensionFilter("markdown", "md"));
+                                        jFileChooser.setSelectedFile(new File(".md"));
+                                        int return_val = jFileChooser.showDialog(null, "确定");
+                                        if (return_val == JFileChooser.APPROVE_OPTION)
+                                            textArea.setCurrentFile(jFileChooser.getSelectedFile());
+                                    }
+                                    try {
+                                        textArea.saveFile();
+                                    } catch (IOException e1) {
+                                        e1.printStackTrace();
+                                    }
+                                }
+                            }
+                            if (confirm != 2) {
+                                textArea.setCurrentFile(file);
+                                try {
+                                    textArea.loadFile();
+                                } catch (IOException e1) {
+                                    e1.printStackTrace();
+                                }
+                            }
+
+                        }
+
                     }
                 }
             }
