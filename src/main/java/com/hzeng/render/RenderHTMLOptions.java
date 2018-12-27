@@ -6,8 +6,30 @@
  * Vestibulum commodo. Ut rhoncus gravida arcu.
  */
 
-package com.hzeng.util;
+package com.hzeng.render;
 
-public class StreamUtils {
+import lombok.Data;
+import org.w3c.dom.Document;
+
+import java.awt.*;
+
+@Data
+public class RenderHTMLOptions {
+
+    private Integer imgWidth;
+
+    private Integer imgHeight;
+
+    private boolean autoWidth;
+
+    private boolean autoHeight;
+
+    private String outType;
+
+    private Document document;
+
+    private Font font;
+
+    private String fontColor;
 
 }

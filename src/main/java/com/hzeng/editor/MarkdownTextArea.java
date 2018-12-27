@@ -1,10 +1,20 @@
+/*
+ * Copyright (c) 2018. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+ * Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan.
+ * Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna.
+ * Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
+ * Vestibulum commodo. Ut rhoncus gravida arcu.
+ */
+
 package com.hzeng.editor;
 
+import com.hzeng.util.FileReadUtil;
 import org.commonmark.node.Node;
 
 import javax.swing.*;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class MarkdownTextArea extends JEditorPane {
 
@@ -47,21 +57,8 @@ public class MarkdownTextArea extends JEditorPane {
 
     public void loadFile() throws IOException {
 
-        FileInputStream fileInputStream = new FileInputStream(currentFile);
-
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-
-        byte[] bytes = new byte[4096];
-
-        int len;
-        StringBuilder stringBuilder = new StringBuilder();
-        while ((len = bufferedInputStream.read(bytes, 0, bytes.length)) != -1) {
-            stringBuilder.append(new String(bytes, 0, len, StandardCharsets.UTF_8));
-        }
-
-        setText(stringBuilder.toString());
+        setText(FileReadUtil.readAll(currentFile));
         saved = true;
-        bufferedInputStream.close();
     }
 
     public void clearArea() {

@@ -1,14 +1,13 @@
 package com.hzeng.editor;
 
+import com.hzeng.render.RenderHTML;
 import com.hzeng.util.Constrains;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.plaf.FontUIResource;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DocumentFilter;
-import javax.swing.text.PlainDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.util.Enumeration;
 
@@ -49,37 +48,38 @@ public class Editor {
         textArea.setName("textArea");
 
         preArea = new MarkdownTextArea();
+        preArea.setEditorKit(new HTMLEditorKit());
+        preArea.setContentType("text/html;charset=UTF-8");
         preArea.setName("preArea");
-
-        preArea.setDocument(textArea.getDocument());
-
+/*
         ((PlainDocument)textArea.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
             public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
                 ((MarkdownTextArea) textArea).setSaved();
-                System.out.println(fb.getDocument().getText(offset, length));
+               // System.out.println(fb.getDocument().getText(offset, length));
                 super.remove(fb, offset, length);
+                preArea.setText("<html><body>" + RenderHTML.convertToHTML(textArea.getText()).toString() + "</body></html>");
             }
         });
-
+*/
         textArea.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                try {
-                    ((MarkdownTextArea) textArea).setSaved();
-                    System.out.println(e.getDocument().getText(e.getOffset(), e.getLength()));
-                } catch (BadLocationException e1) {
-                    e1.printStackTrace();
-                }
+                ((MarkdownTextArea) textArea).setSaved();
+                // System.out.println(e.getDocument().getText(e.getOffset(), e.getLength()));
+                preArea.setText("<html>" + RenderHTML.convertToHTML(textArea.getText()).toString() + "</html>");
+                System.out.println(preArea.getText());
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
                 ((MarkdownTextArea) textArea).setSaved();
+                preArea.setText("<html>" + RenderHTML.convertToHTML(textArea.getText()).toString() + "</html>");
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
+                preArea.setText("<html>" + RenderHTML.convertToHTML(textArea.getText()).toString() + "</html>");
             }
         });
 

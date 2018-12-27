@@ -41,7 +41,7 @@ public class FindComponent {
      * @param t 字节码对象
      * @return 查找对象
      */
-    private static <T extends Component> Component searchComponentByClass(Container c, Class<T> t) {//泛型方法
+    public static <T extends Component> Component searchComponentByClass(Container c, Class<T> t) {//泛型方法
 
         Component result = null;
         Component[] components = c.getComponents();

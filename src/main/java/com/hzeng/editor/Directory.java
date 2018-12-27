@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2018. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+ * Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan.
+ * Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna.
+ * Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
+ * Vestibulum commodo. Ut rhoncus gravida arcu.
+ */
+
 package com.hzeng.editor;
 
 import com.hzeng.util.FindComponent;
@@ -8,11 +16,11 @@ import javax.swing.event.TreeExpansionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 
 class Directory extends JScrollPane {
 
@@ -262,12 +270,7 @@ class FileNode {
             fileNodeArrayList.add(new FileNode(file));
         }
 
-        fileNodeArrayList.sort(new Comparator<FileNode>() {
-            @Override
-            public int compare(FileNode o1, FileNode o2) {
-                return o1.m_file.getName().compareToIgnoreCase(o2.m_file.getName());
-            }
-        });
+        fileNodeArrayList.sort((o1, o2) -> o1.m_file.getName().compareToIgnoreCase(o2.m_file.getName()));
 
         for (FileNode fileNode : fileNodeArrayList) {
 
