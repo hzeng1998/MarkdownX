@@ -5,9 +5,6 @@ import java.awt.*;
 
 public class test {
 
-    private JTextArea textArea1;
-    private JTextArea textArea2;
-
     public static void main(String[] args) {
         JFrame frame = new JFrame("test");
         frame.setContentPane(new test().editor);
@@ -16,8 +13,10 @@ public class test {
         frame.setVisible(true);
     }
 
-    private JTree tree1;
     private JPanel editor;
+    private JTree tree1;
+    private JEditorPane editorPane1;
+    private JEditorPane editorPane2;
 
     private void createUIComponents() {
         // TODO: place custom component creation code here
@@ -38,58 +37,18 @@ public class test {
      * @noinspection ALL
      */
     private void $$$setupUI$$$() {
-        createUIComponents();
         editor = new JPanel();
-        editor.setLayout(new GridBagLayout());
-        final JToolBar toolBar1 = new JToolBar();
-        GridBagConstraints gbc;
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 36;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        editor.add(toolBar1, gbc);
-        final JPanel panel1 = new JPanel();
-        panel1.setLayout(new GridBagLayout());
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        gbc.gridwidth = 35;
-        gbc.weightx = 3.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        editor.add(panel1, gbc);
-        final JScrollPane scrollPane1 = new JScrollPane();
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        panel1.add(scrollPane1, gbc);
-        textArea1.setText("");
-        scrollPane1.setViewportView(textArea1);
-        final JScrollPane scrollPane2 = new JScrollPane();
-        gbc = new GridBagConstraints();
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        panel1.add(scrollPane2, gbc);
-        textArea2 = new JTextArea();
-        scrollPane2.setViewportView(textArea2);
-        final JScrollPane scrollPane3 = new JScrollPane();
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        editor.add(scrollPane3, gbc);
+        editor.setLayout(new BorderLayout(0, 0));
         tree1 = new JTree();
-        scrollPane3.setViewportView(tree1);
+        editor.add(tree1, BorderLayout.WEST);
+        final JScrollPane scrollPane1 = new JScrollPane();
+        editor.add(scrollPane1, BorderLayout.EAST);
+        editorPane1 = new JEditorPane();
+        scrollPane1.setViewportView(editorPane1);
+        final JScrollPane scrollPane2 = new JScrollPane();
+        editor.add(scrollPane2, BorderLayout.CENTER);
+        editorPane2 = new JEditorPane();
+        scrollPane2.setViewportView(editorPane2);
     }
 
     /**

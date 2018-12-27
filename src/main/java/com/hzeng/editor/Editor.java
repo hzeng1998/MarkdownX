@@ -38,6 +38,9 @@ public class Editor {
                 .setWeight(1, 1)
                 .setFill(Constrains.BOTH));
 
+        JPanel editor_pane = new JPanel();
+        editor_pane.setLayout(new GridLayout(1,2));
+
         JScrollPane text_pane = new JScrollPane();
         text_pane.setName("text_pane");
 
@@ -66,20 +69,24 @@ public class Editor {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 ((MarkdownTextArea) textArea).setSaved();
-                // System.out.println(e.getDocument().getText(e.getOffset(), e.getLength()));
-                preArea.setText("<html>" + RenderHTML.convertToHTML(textArea.getText()).toString() + "</html>");
-                System.out.println(preArea.getText());
+                String img_pattern = "(?!(\\bsrc\\b\\s*=\\s*['\"]?)(https|http|ftp:file):)(\\bsrc\\b\\s*=\\s*['\"]?)([^'\"]*)(['\"]?)";
+                String html = RenderHTML.convertToHTML(textArea.getText()).toString().replaceAll(img_pattern, "$3file:$4$5");
+                preArea.setText("<html>" + html + "</html>");
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
                 ((MarkdownTextArea) textArea).setSaved();
-                preArea.setText("<html>" + RenderHTML.convertToHTML(textArea.getText()).toString() + "</html>");
+                String img_pattern = "(?!(\\bsrc\\b\\s*=\\s*['\"]?)(https|http|ftp|file):)(\\bsrc\\b\\s*=\\s*['\"]?)([^'\"]*)(['\"]?)";
+                String html = RenderHTML.convertToHTML(textArea.getText()).toString().replaceAll(img_pattern, "$3file:$4$5");
+                preArea.setText("<html>" + html + "</html>");
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                preArea.setText("<html>" + RenderHTML.convertToHTML(textArea.getText()).toString() + "</html>");
+                String img_pattern = "(?!(\\bsrc\\b\\s*=\\s*['\"]?)(https|http|ftp|file):)(\\bsrc\\b\\s*=\\s*['\"]?)([^'\"]*)(['\"]?)";
+                String html = RenderHTML.convertToHTML(textArea.getText()).toString().replaceAll(img_pattern, "$3file:$4$5");
+                preArea.setText("<html>" + html + "</html>");
             }
         });
 
@@ -91,13 +98,12 @@ public class Editor {
         preArea.setEditable(false);
         preview_pane.getViewport().add(preArea);
 
-        frame.getContentPane().add(text_pane, new Constrains(1, 0, 1, 1)
-                .setFill(Constrains.BOTH)
-                .setWeight(4, 1));
+        editor_pane.add(text_pane);
+        editor_pane.add(preview_pane);
 
-        frame.getContentPane().add(preview_pane, new Constrains(2, 0, 1, 1)
-                .setFill(Constrains.BOTH)
-                .setWeight(4, 1));
+        frame.getContentPane().add(editor_pane, new Constrains(1, 0, 1, 1)
+        .setFill(Constrains.BOTH)
+        .setWeight(4, 1));
 
         frame.setVisible(true);
     }
