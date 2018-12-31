@@ -1,12 +1,23 @@
+/*
+ *  Copyright (c) 2018. All Rights Reserved.
+ */
+
 package com.hzeng.editor;
 
-import com.hzeng.render.RenderHTML;
+import com.hzeng.config.Global;
+import com.hzeng.file.Change;
+import com.hzeng.file.Method;
+import com.hzeng.file.Operation;
+import com.hzeng.net.DocSync;
 import com.hzeng.util.Constrains;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.plaf.FontUIResource;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
+import javax.swing.text.PlainDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.util.Enumeration;
@@ -21,6 +32,10 @@ public class Editor {
         JFrame frame = new JFrame("MarkdownX");
         frame.setName("MarkdownX");
 
+        Global.setFrame(frame);
+
+        Thread docThread = new Thread(new DocSync(), "document synchronize");
+
         Directory directory = new Directory(frame);
         directory.setName("directory");
 
@@ -30,7 +45,7 @@ public class Editor {
         frame.setMinimumSize(new Dimension(1280, 1024));
         frame.setIconImage(new ImageIcon("src/main/resources/icons/title/social-markdown.png").getImage());
 
-        JMenuBar menuBar = new MarkdownMenuBar(frame);
+        JMenuBar menuBar = new MarkdownMenuBar();
         menuBar.setName("menuBar");
         frame.setJMenuBar(menuBar);
 
@@ -54,39 +69,97 @@ public class Editor {
         preArea.setEditorKit(new HTMLEditorKit());
         preArea.setContentType("text/html;charset=UTF-8");
         preArea.setName("preArea");
-/*
+
         ((PlainDocument)textArea.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
             public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
                 ((MarkdownTextArea) textArea).setSaved();
-               // System.out.println(fb.getDocument().getText(offset, length));
+                System.out.println("delete:" + fb.getDocument().getText(offset, length));
+
+                //generator new change
+                Change change = new Change();
+                change.getOperations().add(new Operation(Method.RETAIN, String.valueOf(offset)));
+                try {
+                    change.getOperations().add(new Operation(Method.DELETE, fb.getDocument().getText(offset, length)));
+                } catch (BadLocationException e1) {
+                    e1.printStackTrace();
+                }
+                change.getOperations().add(new Operation(Method.RETAIN, String.valueOf(fb.getDocument().getLength() - offset)));
+
+                synchronized (Global.getChangeSet()) {
+
+                    if (! Global.getChangeSet().isSend()) {
+                        Global.getChangeSet().insertOperations(change);
+                    } else {
+                        synchronized (Global.getChangeBuffer()) {
+                            Global.getChangeBuffer().insertOperations(change);
+                        }
+                    }
+                }
+
                 super.remove(fb, offset, length);
-                preArea.setText("<html><body>" + RenderHTML.convertToHTML(textArea.getText()).toString() + "</body></html>");
+               // preArea.setText("<html><body>" + RenderHTML.convertToHTML(textArea.getText()).toString() + "</body></html>");
             }
         });
-*/
+
         textArea.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 ((MarkdownTextArea) textArea).setSaved();
+                try {
+                    System.out.println("insert:" + e.getDocument().getText(e.getOffset(), e.getLength()));
+                } catch (BadLocationException e1) {
+                    e1.printStackTrace();
+                }
+                //generator new change
+                Change change = new Change();
+                change.getOperations().add(new Operation(Method.RETAIN, String.valueOf(e.getOffset())));
+                try {
+                    change.getOperations().add(new Operation(Method.INSERT, e.getDocument().getText(e.getOffset(), e.getLength())));
+                } catch (BadLocationException e1) {
+                    e1.printStackTrace();
+                }
+                change.getOperations().add(new Operation(Method.RETAIN, String.valueOf(e.getDocument().getLength() - e.getOffset())));
+
+                synchronized (Global.getChangeSet()) {
+
+                    if (! Global.getChangeSet().isSend()) {
+                        Global.getChangeSet().insertOperations(change);
+                    } else {
+                        synchronized (Global.getChangeBuffer()) {
+                            Global.getChangeBuffer().insertOperations(change);
+                        }
+                    }
+                }
+/*
                 String img_pattern = "(?!(\\bsrc\\b\\s*=\\s*['\"]?)(https|http|ftp:file):)(\\bsrc\\b\\s*=\\s*['\"]?)([^'\"]*)(['\"]?)";
                 String html = RenderHTML.convertToHTML(textArea.getText()).toString().replaceAll(img_pattern, "$3file:$4$5");
                 preArea.setText("<html>" + html + "</html>");
+                */
+                Global.setParseText(textArea.getText());
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
                 ((MarkdownTextArea) textArea).setSaved();
+
+                /*
                 String img_pattern = "(?!(\\bsrc\\b\\s*=\\s*['\"]?)(https|http|ftp|file):)(\\bsrc\\b\\s*=\\s*['\"]?)([^'\"]*)(['\"]?)";
                 String html = RenderHTML.convertToHTML(textArea.getText()).toString().replaceAll(img_pattern, "$3file:$4$5");
                 preArea.setText("<html>" + html + "</html>");
+                */
+                Global.setParseText(textArea.getText());
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
+
+                Global.setParseText(textArea.getText());
+                /*
                 String img_pattern = "(?!(\\bsrc\\b\\s*=\\s*['\"]?)(https|http|ftp|file):)(\\bsrc\\b\\s*=\\s*['\"]?)([^'\"]*)(['\"]?)";
                 String html = RenderHTML.convertToHTML(textArea.getText()).toString().replaceAll(img_pattern, "$3file:$4$5");
                 preArea.setText("<html>" + html + "</html>");
+                */
             }
         });
 
@@ -105,6 +178,8 @@ public class Editor {
         .setFill(Constrains.BOTH)
         .setWeight(4, 1));
 
+
+        docThread.start();
         frame.setVisible(true);
     }
 
@@ -123,6 +198,7 @@ public class Editor {
     }
 
     public static void main(String[] args) {
+
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
