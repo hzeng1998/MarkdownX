@@ -8,7 +8,7 @@ import com.hzeng.config.Global;
 import com.hzeng.file.Change;
 import com.hzeng.file.Method;
 import com.hzeng.file.Operation;
-import com.hzeng.net.DocSync;
+import com.hzeng.render.RenderHTML;
 import com.hzeng.util.Constrains;
 
 import javax.swing.*;
@@ -20,6 +20,7 @@ import javax.swing.text.DocumentFilter;
 import javax.swing.text.PlainDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
+import java.io.IOException;
 import java.util.Enumeration;
 
 public class Editor {
@@ -33,9 +34,6 @@ public class Editor {
         frame.setName("MarkdownX");
 
         Global.setFrame(frame);
-
-        Thread docThread = new Thread(new DocSync(), "document synchronize");
-
         Directory directory = new Directory(frame);
         directory.setName("directory");
 
@@ -73,8 +71,20 @@ public class Editor {
         ((PlainDocument)textArea.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
             public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+
+//while synchronize file
+                try {
+                    System.out.println(fb.getDocument().getText(offset, length));
+                } catch (BadLocationException e1) {
+                    e1.printStackTrace();
+                }
+                if (!Global.getSyncDoc().get()) {
+                    super.remove(fb, offset, length);
+                    return;
+                }
+
                 ((MarkdownTextArea) textArea).setSaved();
-                System.out.println("delete:" + fb.getDocument().getText(offset, length));
+                //System.out.println("delete:" + fb.getDocument().getText(offset, length));
 
                 //generator new change
                 Change change = new Change();
@@ -86,15 +96,10 @@ public class Editor {
                 }
                 change.getOperations().add(new Operation(Method.RETAIN, String.valueOf(fb.getDocument().getLength() - offset)));
 
-                synchronized (Global.getChangeSet()) {
-
-                    if (! Global.getChangeSet().isSend()) {
-                        Global.getChangeSet().insertOperations(change);
-                    } else {
-                        synchronized (Global.getChangeBuffer()) {
-                            Global.getChangeBuffer().insertOperations(change);
-                        }
-                    }
+                try {
+                    change.addChange();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
 
                 super.remove(fb, offset, length);
@@ -105,12 +110,20 @@ public class Editor {
         textArea.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                ((MarkdownTextArea) textArea).setSaved();
                 try {
+                    System.out.println(e.getDocument().getText(e.getOffset(), e.getLength()));
+                } catch (BadLocationException e1) {
+                    e1.printStackTrace();
+                }
+                if (! Global.getSyncDoc().get())
+                    return;
+                ((MarkdownTextArea) textArea).setSaved();
+              /*  try {
                     System.out.println("insert:" + e.getDocument().getText(e.getOffset(), e.getLength()));
                 } catch (BadLocationException e1) {
                     e1.printStackTrace();
                 }
+                */
                 //generator new change
                 Change change = new Change();
                 change.getOperations().add(new Operation(Method.RETAIN, String.valueOf(e.getOffset())));
@@ -121,39 +134,51 @@ public class Editor {
                 }
                 change.getOperations().add(new Operation(Method.RETAIN, String.valueOf(e.getDocument().getLength() - e.getOffset())));
 
-                synchronized (Global.getChangeSet()) {
-
-                    if (! Global.getChangeSet().isSend()) {
-                        Global.getChangeSet().insertOperations(change);
-                    } else {
-                        synchronized (Global.getChangeBuffer()) {
-                            Global.getChangeBuffer().insertOperations(change);
-                        }
-                    }
+                try {
+                    change.addChange();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
                 }
+
+                Thread runner = new Thread(() -> {
+
+                    Runnable runnable = () -> {
+                        String img_pattern = "(?!(\\bsrc\\b\\s*=\\s*['\"]?)(https|http|ftp:file):)(\\bsrc\\b\\s*=\\s*['\"]?)([^'\"]*)(['\"]?)";
+                        String html = RenderHTML.convertToHTML(textArea.getText()).toString().replaceAll(img_pattern, "$3file:$4$5");
+                        preArea.setText("<html>" + html + "</html>");
+                    };
+                    SwingUtilities.invokeLater(runnable);
+
+                });
+
+                runner.start();
 /*
                 String img_pattern = "(?!(\\bsrc\\b\\s*=\\s*['\"]?)(https|http|ftp:file):)(\\bsrc\\b\\s*=\\s*['\"]?)([^'\"]*)(['\"]?)";
                 String html = RenderHTML.convertToHTML(textArea.getText()).toString().replaceAll(img_pattern, "$3file:$4$5");
                 preArea.setText("<html>" + html + "</html>");
                 */
-                Global.setParseText(textArea.getText());
+                //Global.setParseText(textArea.getText());
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
                 ((MarkdownTextArea) textArea).setSaved();
 
-                /*
-                String img_pattern = "(?!(\\bsrc\\b\\s*=\\s*['\"]?)(https|http|ftp|file):)(\\bsrc\\b\\s*=\\s*['\"]?)([^'\"]*)(['\"]?)";
-                String html = RenderHTML.convertToHTML(textArea.getText()).toString().replaceAll(img_pattern, "$3file:$4$5");
-                preArea.setText("<html>" + html + "</html>");
-                */
-                Global.setParseText(textArea.getText());
+                Thread runner = new Thread(() -> {
+                    Runnable runnable = () -> {
+                        String img_pattern = "(?!(\\bsrc\\b\\s*=\\s*['\"]?)(https|http|ftp|file):)(\\bsrc\\b\\s*=\\s*['\"]?)([^'\"]*)(['\"]?)";
+                        String html = RenderHTML.convertToHTML(textArea.getText()).toString().replaceAll(img_pattern, "$3file:$4$5");
+                        preArea.setText("<html>" + html + "</html>");
+                    };
+                    SwingUtilities.invokeLater(runnable);
+                });
+
+                runner.start();
+                //Global.setParseText(textArea.getText());
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-
                 Global.setParseText(textArea.getText());
                 /*
                 String img_pattern = "(?!(\\bsrc\\b\\s*=\\s*['\"]?)(https|http|ftp|file):)(\\bsrc\\b\\s*=\\s*['\"]?)([^'\"]*)(['\"]?)";
@@ -178,8 +203,6 @@ public class Editor {
         .setFill(Constrains.BOTH)
         .setWeight(4, 1));
 
-
-        docThread.start();
         frame.setVisible(true);
     }
 

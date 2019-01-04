@@ -4,8 +4,10 @@
 
 package com.hzeng.file;
 
+import com.hzeng.config.Global;
 import lombok.Data;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -29,7 +31,7 @@ public class Change implements Serializable {
 
     public Change() {
         this.operations = new ArrayList<>();
-        this.send = true;
+        this.send = false;
     }
 
     public void transformation(Change beforeChange) {
@@ -111,7 +113,7 @@ public class Change implements Serializable {
         }
     }
 
-    public void mergeOperations() {
+    public int mergeOperations() {
 
         for (int index = 1; index < operations.size(); index++) {
 
@@ -130,6 +132,26 @@ public class Change implements Serializable {
             }
         }
 
+        return operations.size();
+    }
+
+    public void addChange() throws IOException {
+
+        synchronized (Global.getChangeSet()) {
+
+            if (! Global.getChangeSet().isSend()) {
+                Global.getChangeSet().insertOperations(this);
+                Global.getChangeSet().setSend(true);
+                if (! DocSync.sendChange()) {
+                    Global.getChangeSet().setSend(false);
+                }
+
+            } else {
+                synchronized (Global.getChangeBuffer()) {
+                    Global.getChangeBuffer().insertOperations(this);
+                }
+            }
+        }
     }
 
 /*

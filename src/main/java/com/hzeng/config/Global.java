@@ -4,11 +4,13 @@
 
 package com.hzeng.config;
 
+import com.hzeng.editor.InviteCode;
 import com.hzeng.file.Change;
 import com.hzeng.net.WebsocketClientEndpoint;
 import lombok.Data;
 
 import javax.swing.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author hzeng
@@ -19,8 +21,6 @@ import javax.swing.*;
 @Data
 public class Global {
 
-    private static volatile String message;
-
     private static volatile String parseText;
 
     public static String getParseText() {
@@ -28,16 +28,8 @@ public class Global {
     }
 
     public static void setParseText(String parseText) {
-        Global.parseText = parseText;
-    }
-
-    public static String getMessage() {
-        return message;
-    }
-
-    public static void setMessage(String message) {
-        Global.message = message;
-    }
+    Global.parseText = parseText;
+}
 
     public static WebsocketClientEndpoint getWebsocketClientEndpoint() {
         return websocketClientEndpoint;
@@ -51,8 +43,10 @@ public class Global {
         changeBuffer = new Change();
         changeSet = new Change();
         websocketClientEndpoint = null;
-        message = null;
         parseText = null;
+        inviteCode = new InviteCode();
+        syncDoc = new AtomicBoolean(true);
+        ID = null;
     }
 
     private static WebsocketClientEndpoint websocketClientEndpoint;
@@ -97,13 +91,24 @@ public class Global {
 
     private volatile static Change changeSet;
 
-    private volatile static String inviteCode;
+    private volatile static  InviteCode inviteCode;
 
-    public static String getInviteCode() {
+    public static InviteCode getInviteCode() {
         return inviteCode;
     }
 
-    public static void setInviteCode(String inviteCode) {
+    private volatile static AtomicBoolean syncDoc;
+
+    public static AtomicBoolean getSyncDoc() {
+        return syncDoc;
+    }
+
+    public static void setSyncDoc(AtomicBoolean syncDoc) {
+        Global.syncDoc = syncDoc;
+    }
+
+    public static void setInviteCode(InviteCode inviteCode) {
         Global.inviteCode = inviteCode;
     }
 }
+

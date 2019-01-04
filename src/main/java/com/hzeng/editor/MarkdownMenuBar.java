@@ -6,7 +6,7 @@ package com.hzeng.editor;
 
 import com.alibaba.fastjson.JSONObject;
 import com.hzeng.config.Global;
-import com.hzeng.net.DocSync;
+import com.hzeng.file.DocSync;
 import com.hzeng.util.FindComponent;
 
 import javax.swing.*;
@@ -130,15 +130,21 @@ public class MarkdownMenuBar extends JMenuBar {
         collaborateMenu.add(jMenuItem = new JMenuItem("connect", new ImageIcon("src/main/resources/icons/friend/friends.png")));
         jMenuItem.addActionListener(e -> {
             if (e.getModifiers() == MouseEvent.BUTTON1_MASK) {
-                String text = (String) JOptionPane.showInputDialog(null, "Input the invite code, if have one", "Collaborate", JOptionPane.OK_CANCEL_OPTION, new ImageIcon("src/main/resources/icons/invite/technology_connected.png"), null, "");
-                if (text != null) {
-                    if (text.equals("")) {
-                        try {
-                            Global.setWebsocketClientEndpoint(DocSync.connectServer());
-                        } catch (URISyntaxException e1) {
-                            e1.printStackTrace();
-                        }
-                    }
+                String ID = (String) JOptionPane.showInputDialog(null, "Input your id", "Login", JOptionPane.QUESTION_MESSAGE);
+                if (ID == null || ID.equals("")) {
+                    JOptionPane.showMessageDialog(null, "Please input your id", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                Global.setID(ID);
+
+                String inviteCode = (String) JOptionPane.showInputDialog(null, "Input the invite code, if have one", "Collaborate", JOptionPane.OK_CANCEL_OPTION, new ImageIcon("src/main/resources/icons/invite/technology_connected.png"), null, "");
+                if (inviteCode != null && ! inviteCode.equals("")) {
+                    Global.getInviteCode().setCode(inviteCode);
+                }
+                try {
+                    Global.setWebsocketClientEndpoint(DocSync.connectServer());
+                } catch (URISyntaxException e1) {
+                    e1.printStackTrace();
                 }
             }
         });
@@ -153,13 +159,19 @@ public class MarkdownMenuBar extends JMenuBar {
                 else {
                     JSONObject jsonObject = new JSONObject();
                     jsonObject.put("event", "invite");
-                    Global.setMessage(jsonObject.toJSONString());
-                    try {
-                        Global.getInviteCode().wait();
-                        JOptionPane.showInputDialog(null, "Paste to connect input", "Invite Code", JOptionPane.QUESTION_MESSAGE,null,null,Global.getInviteCode());
-                    } catch (InterruptedException e1) {
-                        e1.printStackTrace();
+                    Global.getWebsocketClientEndpoint().sendMessage(jsonObject.toJSONString());
+
+                    if (Global.getInviteCode().getCode() == null) {
+
+                        synchronized (Global.getInviteCode()) {
+                            try {
+                                Global.getInviteCode().wait();
+                            } catch (InterruptedException e1) {
+                                e1.printStackTrace();
+                            }
+                        }
                     }
+                    JOptionPane.showInputDialog(null, "Paste to connect input", "Invite Code", JOptionPane.QUESTION_MESSAGE,null,null,Global.getInviteCode().getCode());
                 }
             }
         });
